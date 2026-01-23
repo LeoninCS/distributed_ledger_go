@@ -2,8 +2,8 @@ package store
 
 import (
 	"bytes"
-	"distributed_ledger_go/internal/service"
 	"distributed_ledger_go/internal/types"
+	"distributed_ledger_go/pkg/audit"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -45,9 +45,9 @@ func (s *Store) Append(txBytes []byte) (*types.Entry, error) {
 			PrevHash: lastHash,
 			TxBytes:  txCopy,
 		}
-		e.EntryHash = service.AuditHash(e.Index, e.PrevHash, e.TxBytes)
+		e.EntryHash = audit.AuditHash(e.Index, e.PrevHash, e.TxBytes)
 
-		enc, err := service.EncodeEntry(e)
+		enc, err := audit.EncodeEntry(e)
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func (s *Store) GetEntry(index uint64) (*types.Entry, error) {
 			return err
 		}
 		return it.Value(func(val []byte) error {
-			dec, derr := service.DecodeEntry(val)
+			dec, derr := audit.DecodeEntry(val)
 			if derr != nil {
 				return derr
 			}
@@ -116,7 +116,7 @@ func (s *Store) VerifyChain() error {
 			}
 			var e *types.Entry
 			err = item.Value(func(val []byte) error {
-				dec, derr := service.DecodeEntry(val)
+				dec, derr := audit.DecodeEntry(val)
 				if derr != nil {
 					return derr
 				}
@@ -134,7 +134,7 @@ func (s *Store) VerifyChain() error {
 				return fmt.Errorf("audit chain broken at %d: prevHash mismatch", i)
 			}
 
-			want := service.AuditHash(e.Index, e.PrevHash, e.TxBytes)
+			want := audit.AuditHash(e.Index, e.PrevHash, e.TxBytes)
 			if !bytes.Equal(want[:], e.EntryHash[:]) {
 				return fmt.Errorf("audit chain broken at %d: entryHash mismatch", i)
 			}
