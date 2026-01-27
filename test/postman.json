@@ -1,0 +1,140 @@
+{
+  "info": {
+    "name": "Distributed Ledger Demo",
+    "_postman_id": "0f9b7b50-0f74-4d94-9b6b-9a0f50d1cafe",
+    "description": "Basic requests for the Gin HTTP API (accounts, transactions, audit). Adjust addresses/signatures as needed.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register Account",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/accounts/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "register"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Account",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/accounts/{{creator_address}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "{{creator_address}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Mint Transaction",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sender\": \"{{creator_address}}\",\n  \"receiver\": \"{{alice_address}}\",\n  \"amount\": 5000,\n  \"nonce\": 1,\n  \"private_key\": \"{{creator_private_key}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transactions/mint",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "mint"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Transfer Transaction",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sender\": \"{{alice_address}}\",\n  \"receiver\": \"{{allen_address}}\",\n  \"amount\": 1000,\n  \"nonce\": 2,\n  \"private_key\": \"{{alice_private_key}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transactions/transfer",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "transfer"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Audit Entry",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/audit/{{audit_index}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "audit",
+            "{{audit_index}}"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "creator_address",
+      "value": ""
+    },
+    {
+      "key": "alice_address",
+      "value": ""
+    },
+    {
+      "key": "creator_private_key",
+      "value": ""
+    },
+    {
+      "key": "alice_private_key",
+      "value": ""
+    },
+    {
+      "key": "allen_address",
+      "value": ""
+    },
+    {
+      "key": "audit_index",
+      "value": "1"
+    }
+  ]
+}
