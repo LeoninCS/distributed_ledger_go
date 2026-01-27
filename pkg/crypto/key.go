@@ -99,3 +99,27 @@ func BytesToPublishKey(pubBytes []byte) (*ecdsa.PublicKey, error) {
 	}
 	return pubKey, nil
 }
+
+func PrivateKeyToHex(priv *ecdsa.PrivateKey) (string, error) {
+	if priv == nil || priv.D == nil {
+		return "", errors.New("nil private key")
+	}
+	buf := make([]byte, 32)
+	priv.D.FillBytes(buf)
+	return hex.EncodeToString(buf), nil
+}
+
+func HexToPrivateKey(hexKey string) (*ecdsa.PrivateKey, error) {
+	raw, err := hex.DecodeString(hexKey)
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) != 32 {
+		return nil, errors.New("invalid private key length: expected 32 bytes")
+	}
+	curve := elliptic.P256()
+	priv := &ecdsa.PrivateKey{PublicKey: ecdsa.PublicKey{Curve: curve}}
+	priv.D = new(big.Int).SetBytes(raw)
+	priv.PublicKey.X, priv.PublicKey.Y = curve.ScalarBaseMult(raw)
+	return priv, nil
+}
