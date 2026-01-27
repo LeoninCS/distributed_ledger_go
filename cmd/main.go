@@ -1,13 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
-	"strings"
 
+	"distributed_ledger_go/config"
+	"distributed_ledger_go/internal/service"
 	"distributed_ledger_go/internal/store"
 	"distributed_ledger_go/internal/txVerify"
 	"distributed_ledger_go/internal/types"
@@ -17,31 +16,30 @@ import (
 )
 
 func main() {
-	// 1) 打开 BadgerDB
-	dataDir := filepath.Join(".", "data")
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		log.Fatalf("mkdir data dir: %v", err)
+	// 加载配置
+	cfg, err := config.Load(filepath.Join("config", "config.yml"))
+	if err != nil {
+		log.Fatalf("load config: %v", err)
 	}
-	opts := badger.DefaultOptions(dataDir)
+	// 配置数据库
+	opts := badger.DefaultOptions(cfg.DataDir)
 	db, err := badger.Open(opts)
 	if err != nil {
 		log.Fatalf("open badger: %v", err)
 	}
 	defer db.Close()
 
-	// 2) 构建 Store
 	s := store.NewStore(db)
-
-	// 2.1) 构建 Audit Store，并在启动时校验审计链
-	a := store.NewStore(db)
-	if err := a.VerifyChain(); err != nil {
+	auditStore := store.NewStore(db)
+	// 初始化服务
+	accountSvc := service.NewAccountService(s)
+	auditSvc := service.NewAuditService(auditStore)
+	if err := auditSvc.VerifyChain(); err != nil {
 		log.Fatalf("audit chain verification failed: %v", err)
 	}
+	validator := txVerify.NewValidator(s)
+	txSvc := service.NewTransactionService(s, validator, auditSvc)
 
-	// 3) 构建 Validator
-	v := txVerify.NewValidator(s)
-
-	// 4) 生成三个用户的密钥对
 	creatorPrivKey, creatorAddr, err := crypto.GenerateKeyPair()
 	if err != nil {
 		log.Fatalf("generate creator key: %v", err)
@@ -60,16 +58,11 @@ func main() {
 	}
 	fmt.Printf("allen address: %s\n", allenAddr)
 
-	// 5) 注册三个账户
-	mustRegister(s, creatorAddr)
-	mustRegister(s, aliceAddr)
-	mustRegister(s, allenAddr)
+	mustRegister(accountSvc, creatorAddr, types.RoleCreator)
+	mustRegister(accountSvc, aliceAddr, "")
+	mustRegister(accountSvc, allenAddr, "")
 
-	// 6) 给 CREATOR 赋予角色权限
-	mustGrantRole(s, creatorAddr, types.RoleCreator)
-
-	// 7) CREATOR 铸币 5000 给 alice
-	creatorAcc, err := s.GetAccount(creatorAddr)
+	creatorAcc, err := accountSvc.GetAccount(creatorAddr)
 	if err != nil {
 		log.Fatalf("get creator: %v", err)
 	}
@@ -82,26 +75,21 @@ func main() {
 	}
 
 	mintHash := txVerify.TxHash(mintTx)
-	mintSig, err := crypto.Sign(creatorPrivKey, mintHash) // <<< 添加签名
+	mintSig, err := crypto.Sign(creatorPrivKey, mintHash)
 	if err != nil {
 		log.Fatalf("sign mint transaction: %v", err)
 	}
 	mintTx.Signature = mintSig
 
-	if err := v.ValidateTransaction(mintTx); err != nil {
-		log.Fatalf("validate mint failed: %v", err)
-	}
-	appendAuditOrDie(a, mintTx)
-	if err := s.ApplyTransaction(mintTx); err != nil {
+	if err := txSvc.Apply(mintTx); err != nil {
 		log.Fatalf("apply mint failed: %v", err)
 	}
 	fmt.Println("\n=== After MINT (CREATOR -> alice 5000) ===")
-	showAccount(s, creatorAddr, "CREATOR")
-	showAccount(s, aliceAddr, "alice")
-	showAccount(s, allenAddr, "allen")
+	showAccount(accountSvc, creatorAddr, "CREATOR")
+	showAccount(accountSvc, aliceAddr, "alice")
+	showAccount(accountSvc, allenAddr, "allen")
 
-	// 8) alice 转账 1000 给 allen
-	aliceAcc, err := s.GetAccount(aliceAddr)
+	aliceAcc, err := accountSvc.GetAccount(aliceAddr)
 	if err != nil {
 		log.Fatalf("get alice: %v", err)
 	}
@@ -113,7 +101,6 @@ func main() {
 		Nonce:    aliceAcc.Nonce + 1,
 	}
 
-	// 9) alice 对交易签名
 	hash := txVerify.TxHash(transferTx)
 	sig, err := crypto.Sign(alicePrivKey, hash)
 	if err != nil {
@@ -121,50 +108,26 @@ func main() {
 	}
 	transferTx.Signature = sig
 
-	// 10) 校验与应用
-	if err := v.ValidateTransaction(transferTx); err != nil {
-		log.Fatalf("validate transfer failed: %v", err)
-	}
-	appendAuditOrDie(a, transferTx)
-	if err := s.ApplyTransaction(transferTx); err != nil {
+	if err := txSvc.Apply(transferTx); err != nil {
 		log.Fatalf("apply transfer failed: %v", err)
 	}
 
-	// 11) 打印最终结果
 	fmt.Println("\n=== After TRANSFER (alice -> allen 1000) ===")
-	showAccount(s, creatorAddr, "CREATOR")
-	showAccount(s, aliceAddr, "alice")
-	showAccount(s, allenAddr, "allen")
+	showAccount(accountSvc, creatorAddr, "CREATOR")
+	showAccount(accountSvc, aliceAddr, "alice")
+	showAccount(accountSvc, allenAddr, "allen")
 }
 
-func mustRegister(s *store.Store, addr string) {
-	if err := s.RegisterAccount(addr); err != nil {
-		if !strings.Contains(err.Error(), "already exists") {
-			log.Fatalf("register %s: %v", addr, err)
-		}
+func mustRegister(svc *service.AccountService, addr, role string) {
+	if err := svc.Register(addr, role); err != nil {
+		log.Fatalf("register %s: %v", addr, err)
 	}
 }
 
-func mustGrantRole(s *store.Store, addr, role string) {
-	if err := s.SetRole(addr, role); err != nil && !strings.Contains(err.Error(), "already") {
-		log.Fatalf("set role %s for %s: %v", role, addr, err)
-	}
-}
-
-func showAccount(s *store.Store, addr string, name string) {
-	acc, err := s.GetAccount(addr)
+func showAccount(svc *service.AccountService, addr string, name string) {
+	acc, err := svc.GetAccount(addr)
 	if err != nil {
 		log.Fatalf("get %s: %v", name, err)
 	}
 	fmt.Printf("%-8s balance=%d nonce=%d frozen=%v\n", name, acc.Balance, acc.Nonce, acc.IsFrozen)
-}
-
-func appendAuditOrDie(a *store.Store, tx types.Transaction) {
-	b, err := json.Marshal(tx)
-	if err != nil {
-		log.Fatalf("marshal tx for audit: %v", err)
-	}
-	if _, err := a.Append(b); err != nil {
-		log.Fatalf("append audit log: %v", err)
-	}
 }
