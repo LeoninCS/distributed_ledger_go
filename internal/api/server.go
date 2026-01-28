@@ -32,9 +32,14 @@ func NewServer(account *service.AccountService, tx *service.TransactionService, 
 func (s *Server) registerRoutes() {
 	s.engine.POST("/accounts/register", s.handleRegisterAccount)
 	s.engine.GET("/accounts/:address", s.handleGetAccount)
+	s.engine.POST("/accounts/promote", s.handlePromoteAccount)
+	s.engine.POST("/accounts/demote", s.handleDemoteAccount)
 
 	s.engine.POST("/transactions/mint", s.handleMint)
 	s.engine.POST("/transactions/transfer", s.handleTransfer)
+	s.engine.POST("/transactions/freeze", s.handleFreeze)
+	s.engine.POST("/transactions/unfreeze", s.handleUnfreeze)
+	s.engine.POST("/transactions/query", s.handleQueryTransactions)
 
 	s.engine.GET("/audit/:index", s.handleAuditEntry)
 }

@@ -9,6 +9,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type promoteRequest struct {
+	CreatorAddress string `json:"creator_address"`
+	TargetAddress  string `json:"target_address"`
+	PrivateKey     string `json:"private_key"`
+}
+
 func (s *Server) handleRegisterAccount(c *gin.Context) {
 	role := s.nextRole()
 	priv, addr, err := crypto.GenerateKeyPair()
@@ -54,4 +60,92 @@ func (s *Server) nextRole() string {
 		return types.RoleCreator
 	}
 	return types.RoleUser
+}
+
+func (s *Server) handlePromoteAccount(c *gin.Context) {
+	var req promoteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.CreatorAddress == "" || req.TargetAddress == "" || req.PrivateKey == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "creator_address, target_address and private_key required"})
+		return
+	}
+	priv, err := crypto.HexToPrivateKey(req.PrivateKey)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	addrHex, err := crypto.PublicKeyToHex(&priv.PublicKey)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if addrHex != req.CreatorAddress {
+		c.JSON(http.StatusForbidden, gin.H{"error": "private key does not match creator address"})
+		return
+	}
+	creator, err := s.accountSvc.GetAccount(req.CreatorAddress)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if creator.Role != types.RoleCreator {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only creator can promote"})
+		return
+	}
+	if _, err := s.accountSvc.GetAccount(req.TargetAddress); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := s.accountSvc.GrantRole(req.TargetAddress, types.RoleAdmin); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"target": req.TargetAddress, "role": types.RoleAdmin})
+}
+
+func (s *Server) handleDemoteAccount(c *gin.Context) {
+	var req promoteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.CreatorAddress == "" || req.TargetAddress == "" || req.PrivateKey == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "creator_address, target_address and private_key required"})
+		return
+	}
+	priv, err := crypto.HexToPrivateKey(req.PrivateKey)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	addrHex, err := crypto.PublicKeyToHex(&priv.PublicKey)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if addrHex != req.CreatorAddress {
+		c.JSON(http.StatusForbidden, gin.H{"error": "private key does not match creator address"})
+		return
+	}
+	creator, err := s.accountSvc.GetAccount(req.CreatorAddress)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if creator.Role != types.RoleCreator {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only creator can demote"})
+		return
+	}
+	if _, err := s.accountSvc.GetAccount(req.TargetAddress); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := s.accountSvc.GrantRole(req.TargetAddress, types.RoleUser); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"target": req.TargetAddress, "role": types.RoleUser})
 }

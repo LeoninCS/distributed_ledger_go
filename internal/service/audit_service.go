@@ -43,3 +43,10 @@ func (svc *AuditService) VerifyChain() error {
 	}
 	return svc.store.VerifyChain()
 }
+
+func (svc *AuditService) ListEntries() ([]*types.Entry, error) {
+	if svc.store == nil {
+		return nil, nil
+	}
+	return svc.store.ListEntries()
+}

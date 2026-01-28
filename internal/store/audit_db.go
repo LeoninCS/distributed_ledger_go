@@ -182,3 +182,37 @@ func loadLast(txn *badger.Txn) (uint64, [32]byte, error) {
 
 	return lastIndex, lastHash, nil
 }
+
+func (s *Store) ListEntries() ([]*types.Entry, error) {
+	if s == nil || s.db == nil {
+		return nil, errors.New("nil audit store")
+	}
+	var entries []*types.Entry
+	err := s.db.View(func(txn *badger.Txn) error {
+		lastIndex, _, err := loadLast(txn)
+		if err != nil {
+			return err
+		}
+		for i := uint64(1); i <= lastIndex; i++ {
+			item, err := txn.Get(entryKey(i))
+			if err != nil {
+				return err
+			}
+			var e *types.Entry
+			err = item.Value(func(val []byte) error {
+				dec, derr := audit.DecodeEntry(val)
+				if derr != nil {
+					return derr
+				}
+				e = dec
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+			entries = append(entries, e)
+		}
+		return nil
+	})
+	return entries, err
+}
