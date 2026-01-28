@@ -39,6 +39,110 @@
       }
     },
     {
+      "name": "Promote User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"creator_address\": \"{{creator_address}}\",\n  \"target_address\": \"{{target_address}}\",\n  \"private_key\": \"{{creator_private_key}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/accounts/promote",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "promote"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Demote User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"creator_address\": \"{{creator_address}}\",\n  \"target_address\": \"{{target_address}}\",\n  \"private_key\": \"{{creator_private_key}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/accounts/demote",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            "demote"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Freeze User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sender\": \"{{admin_address}}\",\n  \"receiver\": \"{{target_address}}\",\n  \"amount\": 0,\n  \"nonce\": 0,\n  \"private_key\": \"{{admin_private_key}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transactions/freeze",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "freeze"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Unfreeze User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sender\": \"{{admin_address}}\",\n  \"receiver\": \"{{target_address}}\",\n  \"amount\": 0,\n  \"nonce\": 0,\n  \"private_key\": \"{{admin_private_key}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transactions/unfreeze",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "unfreeze"
+          ]
+        }
+      }
+    },
+    {
       "name": "Mint Transaction",
       "request": {
         "method": "POST",
@@ -105,6 +209,32 @@
           ]
         }
       }
+    },
+    {
+      "name": "Query Transactions",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requester_address\": \"{{admin_address}}\",\n  \"private_key\": \"{{admin_private_key}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transactions/query",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "query"
+          ]
+        }
+      }
     }
   ],
   "variable": [
@@ -118,6 +248,10 @@
     },
     {
       "key": "alice_address",
+      "value": ""
+    },
+    {
+      "key": "target_address",
       "value": ""
     },
     {
@@ -135,6 +269,14 @@
     {
       "key": "audit_index",
       "value": "1"
+    },
+    {
+      "key": "admin_address",
+      "value": ""
+    },
+    {
+      "key": "admin_private_key",
+      "value": ""
     }
   ]
 }
