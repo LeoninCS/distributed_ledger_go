@@ -81,7 +81,7 @@ func (s *Server) handleTransaction(c *gin.Context, txType types.TxType) {
 	}
 	tx.Signature = sig
 
-	if err := s.txSvc.Apply(tx); err != nil {
+	if err := s.txSubmit(&tx); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

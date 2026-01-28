@@ -2,6 +2,7 @@ package api
 
 import (
 	"distributed_ledger_go/internal/service"
+	"distributed_ledger_go/internal/types"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -11,19 +12,19 @@ import (
 type Server struct {
 	engine     *gin.Engine
 	accountSvc *service.AccountService
-	txSvc      *service.TransactionService
 	auditSvc   *service.AuditService
+	txSubmit   func(*types.Transaction) error
 	mu         sync.Mutex
 	hasCreator bool
 }
 
-func NewServer(account *service.AccountService, tx *service.TransactionService, audit *service.AuditService) *Server {
+func NewServer(account *service.AccountService, txSubmit func(*types.Transaction) error, audit *service.AuditService) *Server {
 	engine := gin.Default()
 	s := &Server{
 		engine:     engine,
 		accountSvc: account,
-		txSvc:      tx,
 		auditSvc:   audit,
+		txSubmit:   txSubmit,
 	}
 	s.registerRoutes()
 	return s
