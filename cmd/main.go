@@ -1,15 +1,18 @@
 package main
 
 import (
+	"flag"
 	"log"
-	"path/filepath"
 
 	"distributed_ledger_go/config"
 	"distributed_ledger_go/internal/node"
 )
 
 func main() {
-	cfg, err := config.Load(filepath.Join("config", "config.yml"))
+	configPath := flag.String("config", "config/config.yml", "path to config file")
+	flag.Parse()
+
+	cfg, err := config.Load(*configPath)
 	if err != nil {
 		log.Fatalf("load config: %v", err)
 	}

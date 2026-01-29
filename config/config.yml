@@ -3,5 +3,5 @@ data_dir: ./data
 http_port: 8080
 raft_dir: ./raft
 raft_bind: 127.0.0.1:7000
-raft_peers:
-  - 127.0.0.1:7000
+raft_peers: []
+raft_bootstrap: true

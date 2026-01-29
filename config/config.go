@@ -14,6 +14,7 @@ type Config struct {
 	RaftDir   string   `yaml:"raft_dir"`
 	RaftBind  string   `yaml:"raft_bind"`
 	RaftPeers []string `yaml:"raft_peers"`
+	RaftBootstrap bool `yaml:"raft_bootstrap"`
 }
 
 func Load(path string) (*Config, error) {
