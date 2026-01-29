@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Distributed Ledger Demo",
-    "_postman_id": "0f9b7b50-0f74-4d94-9b6b-9a0f50d1cafe",
-    "description": "Basic requests for the Gin HTTP API (accounts, transactions, audit). Adjust addresses/signatures as needed.",
+    "name": "Distributed Ledger REST",
+    "_postman_id": "8a7a01dd-4d04-4ad4-a5c8-7cbe973e61d2",
+    "description": "Complete request set for the Raft-backed ledger node. All endpoints assume Gin server listening on baseUrl.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -27,13 +27,13 @@
       "request": {
         "method": "GET",
         "url": {
-          "raw": "{{baseUrl}}/accounts/{{creator_address}}",
+          "raw": "{{baseUrl}}/accounts/{address}",
           "host": [
             "{{baseUrl}}"
           ],
           "path": [
             "accounts",
-            "{{creator_address}}"
+            "{{address}}"
           ]
         }
       }
@@ -102,7 +102,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"sender\": \"{{admin_address}}\",\n  \"receiver\": \"{{target_address}}\",\n  \"amount\": 0,\n  \"nonce\": 0,\n  \"private_key\": \"{{admin_private_key}}\"\n}"
+          "raw": "{\n  \"sender\": \"{{admin_address}}\",\n  \"receiver\": \"{{target_address}}\",\n  \"amount\": 0,\n  \"nonce\": {{admin_nonce}},\n  \"private_key\": \"{{admin_private_key}}\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/transactions/freeze",
@@ -128,7 +128,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"sender\": \"{{admin_address}}\",\n  \"receiver\": \"{{target_address}}\",\n  \"amount\": 0,\n  \"nonce\": 0,\n  \"private_key\": \"{{admin_private_key}}\"\n}"
+          "raw": "{\n  \"sender\": \"{{admin_address}}\",\n  \"receiver\": \"{{target_address}}\",\n  \"amount\": 0,\n  \"nonce\": {{admin_nonce}},\n  \"private_key\": \"{{admin_private_key}}\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/transactions/unfreeze",
@@ -143,7 +143,7 @@
       }
     },
     {
-      "name": "Mint Transaction",
+      "name": "Mint To Admin",
       "request": {
         "method": "POST",
         "header": [
@@ -154,7 +154,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"sender\": \"{{creator_address}}\",\n  \"receiver\": \"{{alice_address}}\",\n  \"amount\": 5000,\n  \"nonce\": 1,\n  \"private_key\": \"{{creator_private_key}}\"\n}"
+          "raw": "{\n  \"sender\": \"{{creator_address}}\",\n  \"receiver\": \"{{admin_address}}\",\n  \"amount\": {{mint_amount}},\n  \"nonce\": {{creator_nonce}},\n  \"private_key\": \"{{creator_private_key}}\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/transactions/mint",
@@ -169,7 +169,7 @@
       }
     },
     {
-      "name": "Transfer Transaction",
+      "name": "Transfer Between Users",
       "request": {
         "method": "POST",
         "header": [
@@ -180,7 +180,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"sender\": \"{{alice_address}}\",\n  \"receiver\": \"{{allen_address}}\",\n  \"amount\": 1000,\n  \"nonce\": 2,\n  \"private_key\": \"{{alice_private_key}}\"\n}"
+          "raw": "{\n  \"sender\": \"{{user_address}}\",\n  \"receiver\": \"{{receiver_address}}\",\n  \"amount\": {{transfer_amount}},\n  \"nonce\": {{user_nonce}},\n  \"private_key\": \"{{user_private_key}}\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/transactions/transfer",
@@ -195,23 +195,7 @@
       }
     },
     {
-      "name": "Get Audit Entry",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/audit/{{audit_index}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "audit",
-            "{{audit_index}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Query Transactions",
+      "name": "Query Transactions/Audit",
       "request": {
         "method": "POST",
         "header": [
@@ -222,7 +206,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"requester_address\": \"{{admin_address}}\",\n  \"private_key\": \"{{admin_private_key}}\"\n}"
+          "raw": "{\n  \"requester_address\": \"{{query_address}}\",\n  \"private_key\": \"{{query_private_key}}\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/transactions/query",
@@ -235,23 +219,99 @@
           ]
         }
       }
+    },
+    {
+      "name": "Get Audit Entry",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/audit/{audit_index}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "audit",
+            "{{audit_index}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Raft Join",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"node_id\": \"{{join_node_id}}\",\n  \"raft_address\": \"{{join_raft_addr}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/raft/join",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "raft",
+            "join"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Raft Remove",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"node_id\": \"{{remove_node_id}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/raft/remove",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "raft",
+            "remove"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Raft Status",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/raft/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "raft",
+            "status"
+          ]
+        }
+      }
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080"
+      "value": "http://127.0.0.1:8101"
     },
     {
       "key": "creator_address",
-      "value": ""
-    },
-    {
-      "key": "alice_address",
-      "value": ""
-    },
-    {
-      "key": "target_address",
       "value": ""
     },
     {
@@ -259,15 +319,7 @@
       "value": ""
     },
     {
-      "key": "alice_private_key",
-      "value": ""
-    },
-    {
-      "key": "allen_address",
-      "value": ""
-    },
-    {
-      "key": "audit_index",
+      "key": "creator_nonce",
       "value": "1"
     },
     {
@@ -277,6 +329,62 @@
     {
       "key": "admin_private_key",
       "value": ""
+    },
+    {
+      "key": "admin_nonce",
+      "value": "1"
+    },
+    {
+      "key": "target_address",
+      "value": ""
+    },
+    {
+      "key": "user_address",
+      "value": ""
+    },
+    {
+      "key": "user_private_key",
+      "value": ""
+    },
+    {
+      "key": "receiver_address",
+      "value": ""
+    },
+    {
+      "key": "user_nonce",
+      "value": "1"
+    },
+    {
+      "key": "transfer_amount",
+      "value": "100"
+    },
+    {
+      "key": "mint_amount",
+      "value": "1000"
+    },
+    {
+      "key": "query_address",
+      "value": ""
+    },
+    {
+      "key": "query_private_key",
+      "value": ""
+    },
+    {
+      "key": "audit_index",
+      "value": "1"
+    },
+    {
+      "key": "join_node_id",
+      "value": "node3"
+    },
+    {
+      "key": "join_raft_addr",
+      "value": "127.0.0.1:7103"
+    },
+    {
+      "key": "remove_node_id",
+      "value": "node3"
     }
   ]
 }
