@@ -38,6 +38,10 @@ func NewServer(account *service.AccountService, txSubmit func(*types.Transaction
 }
 
 func (s *Server) registerRoutes() {
+	s.engine.Static("/ui", "./web")
+	s.engine.GET("/", func(c *gin.Context) {
+		c.File("./web/index.html")
+	})
 	s.engine.POST("/accounts/register", s.handleRegisterAccount)
 	s.engine.GET("/accounts/:address", s.handleGetAccount)
 	s.engine.POST("/accounts/promote", s.handlePromoteAccount)

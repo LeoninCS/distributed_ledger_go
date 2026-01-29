@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ledger Console</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <h1>Ledger</h1>
+      <div class="hero-actions">
+        <button id="theme-toggle" class="theme-toggle" aria-label="switch theme"></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel view" id="view-home">
+        <div class="panel-head">选择角色</div>
+        <div class="category-grid">
+          <button class="category-card" data-target="view-system">
+            <h2>系统状态</h2>
+            <p>查看 Raft 信息</p>
+          </button>
+          <button class="category-card" data-target="view-founder">
+            <h2>创始者</h2>
+            <p>铸币、管理员管理、审计</p>
+          </button>
+          <button class="category-card" data-target="view-admin">
+            <h2>管理者</h2>
+            <p>操作账户、冻结控制</p>
+          </button>
+          <button class="category-card" data-target="view-user">
+            <h2>普通用户</h2>
+            <p>查询与转账</p>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel view" id="view-system" hidden>
+        <div class="view-head">
+          <button class="ghost back-btn" data-back>← 返回</button>
+          <h2>系统管理</h2>
+        </div>
+        <div class="stack">
+          <div>
+            <div class="panel-head">注册新账户</div>
+            <button id="system-register-btn" class="action-btn">注册</button>
+            <div class="result" id="system-register-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">
+              <span>Raft 节点</span>
+              <button id="refresh-status" class="ghost" aria-label="refresh status">⟳</button>
+            </div>
+            <pre id="raft-status">状态待刷新</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view" id="view-founder" hidden>
+        <div class="view-head">
+          <button class="ghost back-btn" data-back>← 返回</button>
+          <h2>创始者面板</h2>
+        </div>
+        <div class="stack">
+          <div>
+            <div class="panel-head">铸币到管理员</div>
+            <form id="founder-mint-form">
+              <input type="text" name="sender" placeholder="创世地址" required />
+              <input type="text" name="receiver" placeholder="管理员地址" required />
+              <input type="number" name="amount" placeholder="金额" min="1" required />
+              <input type="number" name="nonce" placeholder="Nonce" min="1" required />
+              <input type="text" name="key" placeholder="创世私钥" required />
+              <button type="submit" class="action-btn">提交</button>
+            </form>
+            <div class="result" id="founder-mint-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">授予管理员</div>
+            <form id="founder-promote-form">
+              <input type="text" name="creator" placeholder="创世地址" required />
+              <input type="text" name="target" placeholder="目标地址" required />
+              <input type="text" name="key" placeholder="创世私钥" required />
+              <button type="submit" class="action-btn">提升</button>
+            </form>
+            <div class="result" id="founder-promote-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">移除管理员</div>
+            <form id="founder-demote-form">
+              <input type="text" name="creator" placeholder="创世地址" required />
+              <input type="text" name="target" placeholder="目标地址" required />
+              <input type="text" name="key" placeholder="创世私钥" required />
+              <button type="submit" class="action-btn">降级</button>
+            </form>
+            <div class="result" id="founder-demote-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">审计流水</div>
+            <form id="founder-query-form">
+              <input type="text" name="address" placeholder="创世地址" required />
+              <input type="text" name="key" placeholder="创世私钥" required />
+              <button type="submit" class="action-btn">查询</button>
+            </form>
+            <div class="result" id="founder-query-result"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view" id="view-admin" hidden>
+        <div class="view-head">
+          <button class="ghost back-btn" data-back>← 返回</button>
+          <h2>管理者面板</h2>
+        </div>
+        <div class="stack">
+          <div>
+            <div class="panel-head">查询任意账户</div>
+            <form id="admin-account-form">
+              <input type="text" name="address" placeholder="目标地址" required />
+              <button type="submit" class="action-btn">查询</button>
+            </form>
+            <div class="result" id="admin-account-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">管理员转账</div>
+            <form id="admin-transfer-form">
+              <input type="text" name="sender" placeholder="管理员地址" required />
+              <input type="text" name="receiver" placeholder="接收地址" required />
+              <input type="number" name="amount" placeholder="金额" min="1" required />
+              <input type="number" name="nonce" placeholder="Nonce" min="1" required />
+              <input type="text" name="key" placeholder="管理员私钥" required />
+              <button type="submit" class="action-btn">发送</button>
+            </form>
+            <div class="result" id="admin-transfer-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">冻结账户</div>
+            <form id="admin-freeze-form">
+              <input type="text" name="admin" placeholder="管理员地址" required />
+              <input type="text" name="target" placeholder="目标地址" required />
+              <input type="text" name="key" placeholder="管理员私钥" required />
+              <button type="submit" class="action-btn">冻结</button>
+            </form>
+            <div class="result" id="admin-freeze-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">解除冻结</div>
+            <form id="admin-unfreeze-form">
+              <input type="text" name="admin" placeholder="管理员地址" required />
+              <input type="text" name="target" placeholder="目标地址" required />
+              <input type="text" name="key" placeholder="管理员私钥" required />
+              <button type="submit" class="action-btn">解冻</button>
+            </form>
+            <div class="result" id="admin-unfreeze-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">审核流水</div>
+            <form id="admin-query-form">
+              <input type="text" name="address" placeholder="管理员地址" required />
+              <input type="text" name="key" placeholder="管理员私钥" required />
+              <button type="submit" class="action-btn">查询</button>
+            </form>
+            <div class="result" id="admin-query-result"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view" id="view-user" hidden>
+        <div class="view-head">
+          <button class="ghost back-btn" data-back>← 返回</button>
+          <h2>普通用户面板</h2>
+        </div>
+        <div class="stack">
+          <div>
+            <div class="panel-head">查询我的账户</div>
+            <form id="user-account-form">
+              <input type="text" name="address" placeholder="账户地址" required />
+              <button type="submit" class="action-btn">查询</button>
+            </form>
+            <div class="result" id="user-account-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">发起转账</div>
+            <form id="user-transfer-form">
+              <input type="text" name="sender" placeholder="发送地址" required />
+              <input type="text" name="receiver" placeholder="接收地址" required />
+              <input type="number" name="amount" placeholder="金额" min="1" required />
+              <input type="number" name="nonce" placeholder="Nonce" min="1" required />
+              <input type="text" name="key" placeholder="私钥" required />
+              <button type="submit" class="action-btn">发送</button>
+            </form>
+            <div class="result" id="user-transfer-result"></div>
+          </div>
+          <div>
+            <div class="panel-head">查看我的流水</div>
+            <form id="user-query-form">
+              <input type="text" name="address" placeholder="账户地址" required />
+              <input type="text" name="key" placeholder="私钥" required />
+              <button type="submit" class="action-btn">查询</button>
+            </form>
+            <div class="result" id="user-query-result"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 用户、管理者面板保持原样 -->
+    </main>
+  </div>
+  <script src="/ui/app.js" type="module"></script>
+</body>
+</html>
