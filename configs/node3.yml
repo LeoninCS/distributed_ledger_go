@@ -4,6 +4,4 @@ raft_dir: raft/node3
 http_port: 8103
 raft_bind: 127.0.0.1:7103
 raft_bootstrap: false
-raft_peers:
-  - 127.0.0.1:8101
-  - 127.0.0.1:8102
+raft_peers: []
