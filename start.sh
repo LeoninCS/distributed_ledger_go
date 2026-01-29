@@ -16,8 +16,6 @@ else
   exit 1
 fi
 
-rm -rf "$DIR/data" "$DIR/raft"
-
 mkdir -p bin
 go build -o bin/node ./cmd
 
