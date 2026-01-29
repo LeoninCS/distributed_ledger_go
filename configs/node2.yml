@@ -1,0 +1,8 @@
+node_id: node2
+data_dir: data/node2
+raft_dir: raft/node2
+http_port: 8102
+raft_bind: 127.0.0.1:7102
+raft_bootstrap: false
+raft_peers:
+  - 127.0.0.1:8101
