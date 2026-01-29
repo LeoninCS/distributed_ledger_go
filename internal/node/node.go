@@ -90,9 +90,13 @@ func NewNode(cfg *config.Config) (*Node, error) {
 	}
 	n.hasState = hasState
 	if !hasState && !cfg.RaftBootstrap {
-		if err := n.joinCluster(); err != nil {
-			n.Close()
-			return nil, err
+		if len(cfg.RaftPeers) == 0 {
+			log.Printf("node %s 启动时未配置 raft_peers，等待管理员调用 /raft/join", cfg.NodeID)
+		} else {
+			if err := n.joinCluster(); err != nil {
+				n.Close()
+				return nil, err
+			}
 		}
 	}
 
